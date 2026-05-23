@@ -20,7 +20,7 @@ Large Language Models have revolutionized AI — but their centralized nature co
 > [!NOTE]  
 >**I am finnishing on providing sources** from the talk.
 
-Until then have a look on [current SkaiNET examples](https://examples.skainet.sk/) and source code of the [SkaiNET project]([https://examples.skainet.sk/](https://github.com/SKaiNET-developers/SKaiNET) 
+Until then have a look on [current SkaiNET examples](https://examples.skainet.sk/) and source code of the [SkaiNET project](https://github.com/SKaiNET-developers/SKaiNET) 
 
 ## License
 
