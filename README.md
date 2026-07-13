@@ -15,12 +15,33 @@ Large Language Models have revolutionized AI — but their centralized nature co
 
 [`slides/`](slides/) — talk slides ([PDF](slides/2026-KotlinKonf-MHarakal-SKaiNET.pdf))
 
-### Source code 
+### Source code
 
-> [!NOTE]  
->**I am finnishing on providing sources** from the talk.
+[`code/`](code) — a runnable Kotlin Multiplatform (JVM + Android) project that follows the talk
+as **five progressive stages**, each using the real [SKaiNET](https://github.com/SKaiNET-developers/SKaiNET)
+DSL (pinned to 0.36.0):
 
-Until then have a look on [current SkaiNET examples](https://examples.skainet.sk/) and source code of the [SkaiNET project](https://github.com/SKaiNET-developers/SKaiNET) 
+1. **Tensors** — scalar → vector → matrix → tensor → batch, and NumPy-style slicing
+2. **Forward propagation** — `dense` layers and `forward(x, ctx)`
+3. **MLP** — a network approximating `y = sin(x)` (pretrained weights)
+4. **CNN** — a LeNet-style MNIST classifier, the device-first model
+5. **Transformer** — a decoder-only transformer **trained live** in a couple of seconds
+
+Start with the [**slide → code map**](docs/slide-to-code.md), which lines each stage up with the
+deck. Then:
+
+```bash
+cd code
+./gradlew :cli:runStage5          # train a tiny transformer, then predict the next word
+./gradlew :shared:jvmTest         # run the tests for all five stages
+./gradlew :androidApp:assembleDebug   # build the on-device Android demo
+```
+
+The same `sk.ainet.kotlinconf.*` model code runs on the JVM and on Android — the talk's
+device-first, one-codebase thesis. See [`code/README.md`](code/README.md) for details.
+
+You can also explore the [live in-browser SKaiNET demos](https://examples.skainet.sk/) and the
+[SKaiNET project](https://github.com/SKaiNET-developers/SKaiNET) itself.
 
 ## License
 
