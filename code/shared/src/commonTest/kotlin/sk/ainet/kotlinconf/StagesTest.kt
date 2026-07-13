@@ -64,9 +64,11 @@ class StagesTest {
     fun stage4_cnnPipeline() {
         val model = mnistCnn(ctx)
         val pixels = FloatArray(28 * 28) { if ((it % 28) in 13..14) 1f else 0f }
-        val (digit, logits) = classifyDigit(ctx, model, pixels)
-        assertEquals(listOf(1, 10), logits.shape.dimensions.toList())
-        assertTrue(digit in 0..9)
+        val result = classifyDigit(ctx, model, pixels)
+        // Pipeline produces a 10-way probability distribution that sums to ~1.
+        assertEquals(10, result.probabilities.size)
+        assertTrue(result.digit in 0..9)
+        assertTrue(abs(result.probabilities.sum() - 1f) < 1e-3f)
     }
 
     @Test

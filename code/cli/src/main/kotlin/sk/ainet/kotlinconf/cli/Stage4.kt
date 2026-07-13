@@ -1,22 +1,37 @@
 package sk.ainet.kotlinconf.cli
 
 import sk.ainet.context.DirectCpuExecutionContext
+import sk.ainet.kotlinconf.s4_cnn.SampleDigits
 import sk.ainet.kotlinconf.s4_cnn.classifyDigit
+import sk.ainet.kotlinconf.s4_cnn.loadCnnWeights
 import sk.ainet.kotlinconf.s4_cnn.mnistCnn
 
-/** Stage 4 — CNN MNIST inference pipeline. Run: `./gradlew :cli:runStage4`. */
+/** Stage 4 — a real CNN MNIST classifier, running on-device. Run: `./gradlew :cli:runStage4`. */
 fun main() {
     val ctx = DirectCpuExecutionContext.create()
     val model = mnistCnn(ctx)
 
-    // Synthetic "image": a vertical stroke down the middle (untrained weights, so the
-    // prediction is arbitrary — the point is the shape pipeline 1×28×28 → 10 logits).
-    val pixels = FloatArray(28 * 28) { i -> if ((i % 28) in 13..14) 1f else 0f }
+    // Load the pretrained weights from the bundled GGUF file (classpath resource).
+    val weights = object {}.javaClass.getResourceAsStream("/mnist_cnn.gguf")
+        ?.readBytes() ?: error("mnist_cnn.gguf not found on the classpath")
+    loadCnnWeights(model, weights)
 
-    val (digit, logits) = classifyDigit(ctx, model, pixels)
     println("== Stage 4 · CNN MNIST (device-first) ==")
-    println("input  shape = [1, 1, 28, 28]")
-    println("logits shape = ${logits.shape}")
-    println("argmax (untrained) = $digit")
-    println("Load mnist_cnn.gguf weights for a real classifier — see docs/slide-to-code.md")
+    println("loaded mnist_cnn.gguf (${weights.size} bytes) into the LeNet CNN")
+    println()
+
+    // Classify one real MNIST test digit of each label, all fully offline.
+    var correct = 0
+    for (label in SampleDigits.labels) {
+        val result = classifyDigit(ctx, model, SampleDigits.pixels(label))
+        if (result.digit == label) correct++
+        val pct = (result.confidence * 100).toInt()
+        val mark = if (result.digit == label) "✓" else "✗"
+        println("  actual $label → predicted ${result.digit}  (${pct}% conf)  $mark")
+    }
+    println()
+    println("accuracy on the 10 embedded samples: $correct / ${SampleDigits.labels.size}")
+    println()
+    println("A drawn digit:")
+    print(SampleDigits.ascii(SampleDigits.labels.first()))
 }

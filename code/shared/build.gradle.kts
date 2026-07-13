@@ -19,6 +19,9 @@ kotlin {
             // Graph execution + gradient tape (Stage 5 training) live here.
             api(libs.skainet.compile.core)
             api(libs.skainet.compile.dag)
+            // GGUF reader — Stage 4 loads the pretrained mnist_cnn.gguf weights.
+            api(libs.skainet.io.core)
+            api(libs.skainet.io.gguf)
 
             api(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.io.core)

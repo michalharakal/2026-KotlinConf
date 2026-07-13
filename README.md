@@ -24,17 +24,25 @@ DSL (pinned to 0.36.0):
 1. **Tensors** — scalar → vector → matrix → tensor → batch, and NumPy-style slicing
 2. **Forward propagation** — `dense` layers and `forward(x, ctx)`
 3. **MLP** — a network approximating `y = sin(x)` (pretrained weights)
-4. **CNN** — a LeNet-style MNIST classifier, the device-first model
+4. **CNN** — a LeNet-style MNIST classifier with pretrained weights, the device-first model
 5. **Transformer** — a decoder-only transformer **trained live** in a couple of seconds
+
+The Android app turns stages 4 and 5 into two **interactive, on-device** demos — draw a digit
+and watch the CNN recognise it, or train the transformer live and ask it for the next word:
+
+| Draw a digit (Stage 4) | Next word (Stage 5) |
+| --- | --- |
+| ![draw a digit](docs/images/app-mnist.png) | ![next word](docs/images/app-transformer.png) |
 
 Start with the [**slide → code map**](docs/slide-to-code.md), which lines each stage up with the
 deck. Then:
 
 ```bash
 cd code
+./gradlew :cli:runStage4          # classify real MNIST digits with the pretrained CNN
 ./gradlew :cli:runStage5          # train a tiny transformer, then predict the next word
 ./gradlew :shared:jvmTest         # run the tests for all five stages
-./gradlew :androidApp:assembleDebug   # build the on-device Android demo
+./gradlew :androidApp:assembleDebug   # build the interactive on-device Android app
 ```
 
 The same `sk.ainet.kotlinconf.*` model code runs on the JVM and on Android — the talk's

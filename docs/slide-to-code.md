@@ -12,9 +12,9 @@ from-scratch reimplementations — and runs unchanged on the JVM (`:cli`) and on
 | **ML/AI data structures** — Scalar → Vector → Matrix → Tensor → Batch | Tensors, ranks, dtypes, NumPy-style slicing | [`shared/.../s1_tensors/Tensors.kt`](../code/shared/src/commonMain/kotlin/sk/ainet/kotlinconf/s1_tensors/Tensors.kt) | `./gradlew :cli:runStage1` |
 | **Forward Propagation in Kotlin** — the `Linear` / hidden layer | `dense` layer = matmul + bias; `forward(x, ctx)` | [`shared/.../s2_linear/Linear.kt`](../code/shared/src/commonMain/kotlin/sk/ainet/kotlinconf/s2_linear/Linear.kt) | `./gradlew :cli:runStage2` |
 | **Forward propagation** (the `A₂ = X₁W₁₂ + X₂W₂₂` network) | First end-to-end model: MLP approximating `sin x` | [`shared/.../s3_mlp/SinusMlp.kt`](../code/shared/src/commonMain/kotlin/sk/ainet/kotlinconf/s3_mlp/SinusMlp.kt) | `./gradlew :cli:runStage3` |
-| **From 5 fps to 30 fps** / on-device performance | LeNet-style CNN, the device-first model | [`shared/.../s4_cnn/MnistCnn.kt`](../code/shared/src/commonMain/kotlin/sk/ainet/kotlinconf/s4_cnn/MnistCnn.kt) | `./gradlew :cli:runStage4` |
+| **From 5 fps to 30 fps** / on-device performance | LeNet-style CNN classifying real digits from pretrained weights | [`shared/.../s4_cnn/MnistCnn.kt`](../code/shared/src/commonMain/kotlin/sk/ainet/kotlinconf/s4_cnn/MnistCnn.kt) | `./gradlew :cli:runStage4` |
 | **Decoder only** (GPT-2 vs a 10M model) | Decoder-only transformer, **trained live** | [`shared/.../s5_transformer/`](../code/shared/src/commonMain/kotlin/sk/ainet/kotlinconf/s5_transformer/) | `./gradlew :cli:runStage5` |
-| **One language to find them** — coroutines & Multiplatform | Same code on JVM + Android, training off the main thread | [`androidApp/.../DemoViewModel.kt`](../code/androidApp/src/main/kotlin/sk/ainet/kotlinconf/android/DemoViewModel.kt) | `./gradlew :androidApp:assembleDebug` |
+| **One language to find them** — coroutines & Multiplatform | Same code on JVM + Android; two interactive on-device demos, inference off the main thread | [`androidApp/.../AppRoot.kt`](../code/androidApp/src/main/kotlin/sk/ainet/kotlinconf/android/AppRoot.kt) | `./gradlew :androidApp:assembleDebug` |
 | **Kotlin DSL** — data defs / pipelines / architectures → compile → execute | The "ML/AI as Code" pipeline, tied together | all stages above | `./gradlew :shared:jvmTest` |
 
 ## What each stage demonstrates
@@ -29,10 +29,12 @@ from-scratch reimplementations — and runs unchanged on the JVM (`:cli`) and on
   `definition { network(ctx) { ... } }`, weights loaded from the pretrained
   `SinusApproximatorWandB` in `skainet-lang-models`. Max error vs `Math.sin` over `[0, π/2]`
   is < 0.01.
-- **Stage 4 — CNN.** Two conv+ReLU+maxpool blocks → flatten → `dense(10)`. Runs the full
-  inference pipeline `[1,1,28,28] → [1,10]`. Declaring `input(intArrayOf(1, 28, 28))` lets the
-  final dense layer infer its 1568 in-features. Load `mnist_cnn.gguf` weights (via
-  `skainet-io-gguf`) for a real classifier.
+- **Stage 4 — CNN.** Two conv+ReLU+maxpool blocks → flatten → `dense(10)`, `[1,1,28,28] →
+  [1,10]`. A **real classifier**: `loadCnnWeights` fills the layers from the pretrained
+  `mnist_cnn.gguf` (via `skainet-io-gguf`), and `classifyDigit` returns a prediction with a
+  softmax confidence. The CLI classifies real embedded MNIST samples (10/10 correct); the
+  Android app classifies whatever you draw. The layer names (`stage1.conv1`, `stage2.conv2`,
+  `out`) are chosen to match the tensor names in the GGUF file.
 - **Stage 5 — transformer.** A decoder-only transformer (token + positional embeddings →
   causal self-attention → projection) built as a custom `Module`, **trained from scratch** on a
   six-sentence corpus in ~120 epochs (a couple of seconds on CPU). Loss drops from ~2.9 to ~0.6

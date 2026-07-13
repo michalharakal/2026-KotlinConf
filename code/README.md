@@ -33,8 +33,18 @@ code/
 ./gradlew :cli:runStage1   # tensors & slicing
 ./gradlew :cli:runStage2   # forward propagation
 ./gradlew :cli:runStage3   # MLP: y = sin(x)
-./gradlew :cli:runStage4   # CNN MNIST inference pipeline
+./gradlew :cli:runStage4   # CNN: classify real MNIST digits (pretrained weights)
 ./gradlew :cli:runStage5   # train a tiny transformer, then predict
+```
+
+Stage 4 loads `mnist_cnn.gguf` and classifies real embedded MNIST test digits:
+
+```
+loaded mnist_cnn.gguf (116192 bytes) into the LeNet CNN
+  actual 0 → predicted 0  (100% conf)  ✓
+  actual 7 → predicted 7  (100% conf)  ✓
+  …
+accuracy on the 10 embedded samples: 10 / 10
 ```
 
 Stage 5 sample output:
@@ -59,9 +69,21 @@ training …
 ./gradlew :androidApp:assembleDebug   # builds the on-device demo APK
 ```
 
-The app runs the exact same `sk.ainet.kotlinconf.*` shared code, off the main thread on
-`Dispatchers.Default`, streaming results back through a `StateFlow` (the pattern from the
-SKaiNET Android integration guide).
+The app is two **interactive, on-device** demos, styled to match the SKaiNET examples
+(examples.skainet.sk) — dark-first with the signature red accent:
+
+| Home | Draw a digit (Stage 4) | Next word (Stage 5) |
+| --- | --- | --- |
+| ![home](../docs/images/app-home.png) | ![mnist](../docs/images/app-mnist.png) | ![transformer](../docs/images/app-transformer.png) |
+
+- **Draw a digit** — scribble a number on the canvas; the LeNet CNN (real `mnist_cnn.gguf`
+  weights, loaded from assets) classifies it and shows a per-digit confidence.
+- **Next word** — a decoder-only transformer trains live on-device (loss streamed into the
+  UI), then predicts the next word for any prompt you type.
+
+Both run the exact same `sk.ainet.kotlinconf.*` shared code the `:cli` runs on the JVM, off
+the main thread on `Dispatchers.Default`, streaming results back through a `StateFlow` (the
+pattern from the SKaiNET Android integration guide).
 
 ## Notes
 
