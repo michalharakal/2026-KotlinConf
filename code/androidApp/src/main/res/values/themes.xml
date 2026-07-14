@@ -10,10 +10,12 @@
     </style>
 
     <!-- Launch splash (Android 12 SplashScreen API, backported via core-splashscreen):
-         the SKaiNET logo on the near-black canvas, then hands off to Theme.SKaiNET. -->
+         the SKaiNET logo on a white badge (so its dark nodes stay visible on the near-black
+         canvas, and the ring isn't clipped by the circular icon mask), then hands off to
+         Theme.SKaiNET. -->
     <style name="Theme.SKaiNET.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/skai_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/skainet_logo</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/skainet_splash_icon</item>
         <item name="postSplashScreenTheme">@style/Theme.SKaiNET</item>
     </style>
 
