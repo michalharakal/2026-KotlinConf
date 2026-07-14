@@ -46,6 +46,7 @@ import sk.ainet.kotlinconf.android.ui.DigitCanvas
 import sk.ainet.kotlinconf.android.ui.rememberDrawState
 import sk.ainet.kotlinconf.android.ui.toMnistPixels
 import sk.ainet.ui.components.LoadingIndicator
+import sk.ainet.ui.components.SkaiNetLogo
 import sk.ainet.ui.plot.AxisConfig
 import sk.ainet.ui.plot.DataPoint
 import sk.ainet.ui.plot.DataSeries
@@ -107,10 +108,10 @@ private fun BrandHeader() {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             Modifier.size(40.dp).clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.primary),
+                .background(Color.White),
             contentAlignment = Alignment.Center,
         ) {
-            Text("S", color = Color.White, fontWeight = FontWeight.Black, fontSize = 24.sp)
+            SkaiNetLogo(Modifier.size(32.dp))
         }
         Spacer(Modifier.width(12.dp))
         Column {

@@ -2,4 +2,7 @@
 <resources>
     <!-- SKaiNET near-black canvas — matches the Compose dark theme background. -->
     <color name="skai_background">#FF0A0B0D</color>
+    <!-- The logo's background: it ships transparent, so the splash sits it on white
+         (its natural light context) — keeps the dark nodes visible, no separate badge. -->
+    <color name="skai_logo_background">#FFFFFFFF</color>
 </resources>
