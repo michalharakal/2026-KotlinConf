@@ -1,5 +1,6 @@
 package sk.ainet.kotlinconf.web
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
@@ -66,8 +68,54 @@ private val SkaiColors = darkColorScheme(
 )
 
 private const val TOTAL_EPOCHS = 120
+private const val REPO = "https://github.com/SKaiNET-developers/SKaiNET"
 
 private enum class Phase { Idle, Training, Done }
+
+/**
+ * Top banner: the SKaiNET logo (on a white chip so its dark nodes read on the dark page), a
+ * one-line "what is this", and a clear link to the framework's repo. The whole bar is clickable.
+ */
+@Composable
+private fun Banner() {
+    val uriHandler = LocalUriHandler.current
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth().clickable { uriHandler.openUri(REPO) },
+    ) {
+        Row(
+            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                Modifier.size(40.dp).clip(RoundedCornerShape(9.dp)).background(Color.White),
+                contentAlignment = Alignment.Center,
+            ) { SkaiNetLogo(Modifier.size(32.dp)) }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "SKaiNET",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    "A from-scratch machine-learning framework in Kotlin Multiplatform.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Text(
+                "GitHub",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
 
 @Composable
 fun App() {
@@ -75,6 +123,8 @@ fun App() {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.TopCenter) {
                 Column(Modifier.widthIn(max = 560.dp).fillMaxWidth()) {
+                    Banner()
+                    Spacer(Modifier.height(20.dp))
                     Header()
                     Spacer(Modifier.height(20.dp))
                     TransformerDemo()
@@ -135,9 +185,9 @@ private fun TransformerDemo() {
         scope.launch {
             val t = buildTinyTransformerTrainer()
             trainer = t
-            // train() yields periodically, keeping the single-threaded browser UI responsive
-            // so the loss plot animates as it drops.
-            t.train(epochs = TOTAL_EPOCHS, learningRate = 0.05f).collect { p ->
+            // pauseMillis = 1 → train() inserts real macrotask gaps so the single-threaded
+            // browser can repaint (the loss plot + progress bar animate; the UI stays live).
+            t.train(epochs = TOTAL_EPOCHS, learningRate = 0.05f, pauseMillis = 1).collect { p ->
                 epoch = p.epoch
                 loss = p.loss
                 lossHistory = lossHistory + DataPoint(p.epoch.toFloat(), p.loss)
@@ -202,6 +252,13 @@ private fun TrainingView(epoch: Int, loss: Float, lossHistory: List<DataPoint>) 
             color = MaterialTheme.colorScheme.onSurface,
         )
     }
+    Spacer(Modifier.height(12.dp))
+    LinearProgressIndicator(
+        progress = { epoch / TOTAL_EPOCHS.toFloat() },
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.primary,
+        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+    )
     Spacer(Modifier.height(16.dp))
     LossPlot(lossHistory)
 }
@@ -320,9 +377,7 @@ private fun RepoFooter() {
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
             textDecoration = TextDecoration.Underline,
-            modifier = Modifier.clickable {
-                uriHandler.openUri("https://github.com/SKaiNET-developers/SKaiNET")
-            },
+            modifier = Modifier.clickable { uriHandler.openUri(REPO) },
         )
     }
 }

@@ -1,5 +1,6 @@
 package sk.ainet.kotlinconf.models.transformer
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.yield
@@ -71,10 +72,17 @@ class TinyTransformerTrainer(
 
     /**
      * Cold flow emitting once per epoch; collection is cancellable between
-     * steps, which is how Stop works. The `yield()` calls keep the UI alive on
-     * single-threaded targets (JS/Wasm in the browser).
+     * steps, which is how Stop works.
+     *
+     * [pauseMillis] controls how the loop yields to the caller's event loop. On a real
+     * background thread (JVM/Android) leave it 0 — a plain `yield()` is enough. On a
+     * single-threaded target (JS/Wasm in the browser) pass a small value (e.g. 1): a
+     * `yield()` only drains microtasks and never lets the browser repaint, so training
+     * *looks frozen*; `delay(pauseMillis)` schedules a macrotask, letting the UI render
+     * the loss plot and progress bar between chunks.
      */
-    fun train(epochs: Int, learningRate: Float): Flow<TrainingProgress> = flow {
+    fun train(epochs: Int, learningRate: Float, pauseMillis: Long = 0L): Flow<TrainingProgress> = flow {
+        suspend fun breathe() { if (pauseMillis > 0) delay(pauseMillis) else yield() }
         val runner = training<FP32, Float> {
             model { model }
             loss { CrossEntropyLoss() }
@@ -95,7 +103,7 @@ class TinyTransformerTrainer(
                 // like the reference implementation.
                 val realCount = maxOf(1, sample.realTokenCount)
                 lossSum += rawLoss * contextLen / realCount
-                if (index % 8 == 7) yield()
+                if (index % 4 == 3) breathe()
             }
 
             // Stable heatmap: always snapshot the first window (eval phase, no tape).
@@ -112,7 +120,7 @@ class TinyTransformerTrainer(
                     isCompleted = epoch == epochs,
                 )
             )
-            yield()
+            breathe()
         }
     }
 
