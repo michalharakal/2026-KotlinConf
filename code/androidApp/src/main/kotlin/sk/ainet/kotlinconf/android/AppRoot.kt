@@ -27,7 +27,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,12 +42,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.delay
 import sk.ainet.kotlinconf.android.ui.DigitCanvas
 import sk.ainet.kotlinconf.android.ui.rememberDrawState
 import sk.ainet.kotlinconf.android.ui.toMnistPixels
 import sk.ainet.ui.components.LoadingIndicator
-import sk.ainet.ui.components.SkaiNetSplash
 import sk.ainet.ui.plot.AxisConfig
 import sk.ainet.ui.plot.DataPoint
 import sk.ainet.ui.plot.DataSeries
@@ -61,15 +58,8 @@ private enum class Screen { HOME, MNIST, TRANSFORMER }
 @Composable
 fun AppRoot() {
     var screen by remember { mutableStateOf(Screen.HOME) }
-    var splash by remember { mutableStateOf(true) }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        if (splash) {
-            LaunchedEffect(Unit) { delay(1600); splash = false }
-            SkaiNetSplash(
-                title = "SKaiNET",
-                subtitle = "device-first machine learning · KotlinConf 2026",
-            )
-        } else when (screen) {
+        when (screen) {
             Screen.HOME -> HomeScreen(onOpen = { screen = it })
             Screen.MNIST -> MnistScreen(onBack = { screen = Screen.HOME })
             Screen.TRANSFORMER -> TransformerScreen(onBack = { screen = Screen.HOME })
@@ -312,12 +302,6 @@ private fun TransformerScreen(onBack: () -> Unit, vm: TransformerViewModel = vie
             }
 
             TrainingPhase.Done -> {
-                Text(
-                    "Trained (final loss ${"%.3f".format(state.loss)}). Type a prompt; the model predicts the next word.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(16.dp))
                 LossPlot(state.lossHistory, state.totalEpochs)
                 Spacer(Modifier.height(16.dp))
                 OutlinedTextField(

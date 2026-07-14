@@ -151,6 +151,10 @@ Two **interactive, on-device** demos, styled to match the SKaiNET examples
 ./gradlew :webApp:wasmJsBrowserDistribution     # static bundle in build/dist/wasmJs
 ```
 
+The static bundle is self-contained (relative paths) and is published to **GitHub Pages** by
+[`.github/workflows/deploy-web.yml`](../.github/workflows/deploy-web.yml) — enable it under
+Settings → Pages → Source: "GitHub Actions".
+
 The **same `:models:tiny-transformer` code** compiled to WebAssembly. A branded splash (the
 official SKaiNET rotating-logo loader) fronts a **Start training** button; on tap the decoder-only
 transformer trains from scratch in the browser (no server, no download) while a **live loss

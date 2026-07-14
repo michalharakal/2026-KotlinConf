@@ -25,8 +25,15 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            // Bundles the official SKaiNET logo (composeResources/) for the splash.
+            implementation(compose.components.resources)
         }
     }
+}
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "sk.ainet.ui.generated.resources"
 }
 
 android {

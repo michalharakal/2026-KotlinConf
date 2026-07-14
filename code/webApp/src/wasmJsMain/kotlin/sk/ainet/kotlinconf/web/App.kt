@@ -1,5 +1,6 @@
 package sk.ainet.kotlinconf.web
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -32,13 +34,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import sk.ainet.kotlinconf.models.transformer.TinyTransformerTrainer
 import sk.ainet.kotlinconf.models.transformer.buildTinyTransformerTrainer
 import sk.ainet.ui.components.LoadingIndicator
+import sk.ainet.ui.components.SkaiNetLogo
 import sk.ainet.ui.plot.AxisConfig
 import sk.ainet.ui.plot.DataPoint
 import sk.ainet.ui.plot.DataSeries
@@ -73,6 +78,8 @@ fun App() {
                     Header()
                     Spacer(Modifier.height(20.dp))
                     TransformerDemo()
+                    Spacer(Modifier.height(24.dp))
+                    RepoFooter()
                 }
             }
         }
@@ -150,7 +157,6 @@ private fun TransformerDemo() {
                 Phase.Idle -> IdleSplash(onStart = ::startTraining)
                 Phase.Training -> TrainingView(epoch, loss, lossHistory)
                 Phase.Done -> DoneView(
-                    loss = loss,
                     lossHistory = lossHistory,
                     prompt = prompt,
                     predictions = predictions,
@@ -170,7 +176,7 @@ private fun IdleSplash(onStart: () -> Unit) {
         Modifier.fillMaxWidth().padding(vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        LoadingIndicator(size = 120.dp)
+        SkaiNetLogo(Modifier.size(120.dp))
         Spacer(Modifier.height(20.dp))
         Text(
             "Train a decoder-only transformer from scratch on a tiny German corpus — right here, " +
@@ -202,7 +208,6 @@ private fun TrainingView(epoch: Int, loss: Float, lossHistory: List<DataPoint>) 
 
 @Composable
 private fun DoneView(
-    loss: Float,
     lossHistory: List<DataPoint>,
     prompt: String,
     predictions: List<Pair<String, Float>>,
@@ -210,12 +215,6 @@ private fun DoneView(
     onPredict: () -> Unit,
     onRetrain: () -> Unit,
 ) {
-    Text(
-        "Trained (final loss ${fmt(loss)}). Type a prompt; the model predicts the next word.",
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(Modifier.height(16.dp))
     LossPlot(lossHistory)
     Spacer(Modifier.height(16.dp))
     OutlinedTextField(
@@ -295,6 +294,35 @@ private fun ProbabilityBar(label: String, value: Float, highlight: Boolean) {
             modifier = Modifier.fillMaxWidth(),
             color = if (highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
+        )
+    }
+}
+
+/**
+ * Page-flow call to action: SKaiNET is open source — a clear, always-visible link to the repo,
+ * styled with the red accent so it reads as an invitation rather than fine print.
+ */
+@Composable
+private fun RepoFooter() {
+    val uriHandler = LocalUriHandler.current
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+        Spacer(Modifier.height(16.dp))
+        Text(
+            "SKaiNET is a from-scratch machine-learning framework in Kotlin Multiplatform.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(10.dp))
+        Text(
+            "Star it on GitHub  ·  github.com/SKaiNET-developers/SKaiNET",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            textDecoration = TextDecoration.Underline,
+            modifier = Modifier.clickable {
+                uriHandler.openUri("https://github.com/SKaiNET-developers/SKaiNET")
+            },
         )
     }
 }

@@ -3,6 +3,7 @@ package sk.ainet.kotlinconf.android
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import sk.ainet.kotlinconf.android.theme.SKaiNETTheme
 
 /**
@@ -12,6 +13,9 @@ import sk.ainet.kotlinconf.android.theme.SKaiNETTheme
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Android 12 launch splash (backported): shows the SKaiNET logo over the dark canvas
+        // instead of the OS's generic blank window. Must run before super.onCreate.
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         setContent {
             SKaiNETTheme {
