@@ -1,10 +1,11 @@
 name: Deploy web demo to GitHub Pages
 
 # Builds the Compose/WebAssembly transformer demo (:webApp) into a static site and
-# publishes it to GitHub Pages. Enable it once under Settings → Pages → Source: "GitHub Actions".
+# publishes it to GitHub Pages. Deploys only from the default branch — merge to main to
+# publish. (Pages Source must be "GitHub Actions"; the github-pages environment allows main.)
 on:
   push:
-    branches: [main, add-skainet-code-samples]
+    branches: [main]
     paths:
       - "code/**"
       - ".github/workflows/deploy-web.yml"

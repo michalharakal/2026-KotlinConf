@@ -152,8 +152,8 @@ Two **interactive, on-device** demos, styled to match the SKaiNET examples
 ```
 
 The static bundle is self-contained (relative paths) and is published to **GitHub Pages** by
-[`.github/workflows/deploy-web.yml`](../.github/workflows/deploy-web.yml) — enable it under
-Settings → Pages → Source: "GitHub Actions".
+[`.github/workflows/deploy-web.yml`](../.github/workflows/deploy-web.yml) on every merge to
+`main` (Pages Source must be set to "GitHub Actions" once, under Settings → Pages).
 
 The **same `:models:tiny-transformer` code** compiled to WebAssembly. A branded splash (the
 official SKaiNET rotating-logo loader) fronts a **Start training** button; on tap the decoder-only
