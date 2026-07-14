@@ -28,6 +28,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines)
             // The web demo trains the decoder-only transformer live — no weight file needed.
             implementation(project(":models:tiny-transformer"))
+            // Rotating-logo loader + loss plot, vendored from the official SKaiNET examples.
+            implementation(project(":ui-kit"))
         }
     }
 }

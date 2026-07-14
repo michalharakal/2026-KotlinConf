@@ -38,6 +38,8 @@ android {
 
 dependencies {
     implementation(project(":shared"))
+    // Rotating-logo loader + loss plot, vendored from the official SKaiNET examples.
+    implementation(project(":ui-kit"))
 
     implementation(compose.runtime)
     implementation(compose.foundation)

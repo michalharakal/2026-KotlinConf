@@ -16,15 +16,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +38,13 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import sk.ainet.kotlinconf.models.transformer.TinyTransformerTrainer
 import sk.ainet.kotlinconf.models.transformer.buildTinyTransformerTrainer
+import sk.ainet.ui.components.LoadingIndicator
+import sk.ainet.ui.plot.AxisConfig
+import sk.ainet.ui.plot.DataPoint
+import sk.ainet.ui.plot.DataSeries
+import sk.ainet.ui.plot.GridConfig
+import sk.ainet.ui.plot.LinePlot
+import sk.ainet.ui.plot.PlotBounds
 
 // SKaiNET design system — dark, near-black canvas with the signature red accent
 // (mirrors examples.skainet.sk and the Android demo's theme).
@@ -55,6 +61,8 @@ private val SkaiColors = darkColorScheme(
 )
 
 private const val TOTAL_EPOCHS = 120
+
+private enum class Phase { Idle, Training, Done }
 
 @Composable
 fun App() {
@@ -97,9 +105,10 @@ private fun Header() {
 
 @Composable
 private fun TransformerDemo() {
-    var training by remember { mutableStateOf(true) }
+    var phase by remember { mutableStateOf(Phase.Idle) }
     var epoch by remember { mutableStateOf(0) }
     var loss by remember { mutableStateOf(0f) }
+    var lossHistory by remember { mutableStateOf<List<DataPoint>>(emptyList()) }
     var prompt by remember { mutableStateOf("Der Hund") }
     var predictions by remember { mutableStateOf<List<Pair<String, Float>>>(emptyList()) }
     var trainer by remember { mutableStateOf<TinyTransformerTrainer?>(null) }
@@ -110,17 +119,25 @@ private fun TransformerDemo() {
         predictions = t.predictor().predictNext(prompt, k = 5)?.topK.orEmpty()
     }
 
-    // Train once on entry. train() yields periodically, keeping the single-threaded
-    // browser UI responsive so the loss animates as it drops.
-    LaunchedEffect(Unit) {
-        val t = buildTinyTransformerTrainer()
-        trainer = t
-        t.train(epochs = TOTAL_EPOCHS, learningRate = 0.05f).collect { p ->
-            epoch = p.epoch
-            loss = p.loss
+    fun startTraining() {
+        phase = Phase.Training
+        epoch = 0
+        loss = 0f
+        lossHistory = emptyList()
+        predictions = emptyList()
+        scope.launch {
+            val t = buildTinyTransformerTrainer()
+            trainer = t
+            // train() yields periodically, keeping the single-threaded browser UI responsive
+            // so the loss plot animates as it drops.
+            t.train(epochs = TOTAL_EPOCHS, learningRate = 0.05f).collect { p ->
+                epoch = p.epoch
+                loss = p.loss
+                lossHistory = lossHistory + DataPoint(p.epoch.toFloat(), p.loss)
+            }
+            phase = Phase.Done
+            predict()
         }
-        training = false
-        predict()
     }
 
     Card(
@@ -129,73 +146,137 @@ private fun TransformerDemo() {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(Modifier.padding(20.dp)) {
-            if (training) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator(
-                        Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = 2.dp,
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        "Training on-device…  epoch $epoch/$TOTAL_EPOCHS  ·  loss ${fmt(loss)}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-                Spacer(Modifier.height(12.dp))
-                LinearProgressIndicator(
-                    progress = { epoch / TOTAL_EPOCHS.toFloat() },
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            when (phase) {
+                Phase.Idle -> IdleSplash(onStart = ::startTraining)
+                Phase.Training -> TrainingView(epoch, loss, lossHistory)
+                Phase.Done -> DoneView(
+                    loss = loss,
+                    lossHistory = lossHistory,
+                    prompt = prompt,
+                    predictions = predictions,
+                    onPromptChange = { prompt = it },
+                    onPredict = { scope.launch { predict() } },
+                    onRetrain = ::startTraining,
                 )
-            } else {
-                Text(
-                    "Trained (final loss ${fmt(loss)}). Type a prompt; the model predicts the next word.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = prompt,
-                    onValueChange = { prompt = it },
-                    label = { Text("Prompt") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(12.dp))
-                Button(
-                    onClick = { scope.launch { predict() } },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Predict next word") }
-
-                if (predictions.isNotEmpty()) {
-                    Spacer(Modifier.height(20.dp))
-                    Text(
-                        "Next word after \"$prompt\"",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    val top = predictions.firstOrNull()?.first
-                    for ((word, p) in predictions) {
-                        ProbabilityBar(word, p, highlight = word == top)
-                    }
-                }
             }
         }
     }
 }
 
+/** Branded landing: the official SKaiNET mark (orbiting triangle) over a Start button. */
+@Composable
+private fun IdleSplash(onStart: () -> Unit) {
+    Column(
+        Modifier.fillMaxWidth().padding(vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        LoadingIndicator(size = 120.dp)
+        Spacer(Modifier.height(20.dp))
+        Text(
+            "Train a decoder-only transformer from scratch on a tiny German corpus — right here, " +
+                "in a couple of seconds.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(20.dp))
+        Button(onClick = onStart, modifier = Modifier.fillMaxWidth()) {
+            Text("Start training")
+        }
+    }
+}
+
+@Composable
+private fun TrainingView(epoch: Int, loss: Float, lossHistory: List<DataPoint>) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        LoadingIndicator(size = 28.dp)
+        Spacer(Modifier.width(12.dp))
+        Text(
+            "Training on-device…  epoch $epoch/$TOTAL_EPOCHS  ·  loss ${fmt(loss)}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+    Spacer(Modifier.height(16.dp))
+    LossPlot(lossHistory)
+}
+
+@Composable
+private fun DoneView(
+    loss: Float,
+    lossHistory: List<DataPoint>,
+    prompt: String,
+    predictions: List<Pair<String, Float>>,
+    onPromptChange: (String) -> Unit,
+    onPredict: () -> Unit,
+    onRetrain: () -> Unit,
+) {
+    Text(
+        "Trained (final loss ${fmt(loss)}). Type a prompt; the model predicts the next word.",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(16.dp))
+    LossPlot(lossHistory)
+    Spacer(Modifier.height(16.dp))
+    OutlinedTextField(
+        value = prompt,
+        onValueChange = onPromptChange,
+        label = { Text("Prompt") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Spacer(Modifier.height(12.dp))
+    Row(Modifier.fillMaxWidth()) {
+        Button(onClick = onPredict, modifier = Modifier.weight(1f)) { Text("Predict next word") }
+        Spacer(Modifier.width(12.dp))
+        OutlinedButton(onClick = onRetrain) { Text("Train again") }
+    }
+    if (predictions.isNotEmpty()) {
+        Spacer(Modifier.height(20.dp))
+        Text(
+            "Next word after \"$prompt\"",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Spacer(Modifier.height(10.dp))
+        val top = predictions.firstOrNull()?.first
+        for ((word, p) in predictions) {
+            ProbabilityBar(word, p, highlight = word == top)
+        }
+    }
+}
+
+/** Live training-loss curve, drawn with the vendored SKaiNET plot API. */
+@Composable
+private fun LossPlot(history: List<DataPoint>) {
+    val yMax = (history.maxOfOrNull { it.y } ?: 3f).coerceAtLeast(0.1f)
+    LinePlot(
+        series = listOf(
+            DataSeries(
+                points = history,
+                color = MaterialTheme.colorScheme.primary,
+                strokeWidth = 2f,
+            ),
+        ),
+        modifier = Modifier.fillMaxWidth().height(180.dp),
+        bounds = PlotBounds(0f, TOTAL_EPOCHS.toFloat(), 0f, yMax),
+        xAxis = AxisConfig(
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            labelFormatter = { it.toInt().toString() },
+        ),
+        yAxis = AxisConfig(
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            labelFormatter = { fmt(it) },
+        ),
+        grid = GridConfig(color = MaterialTheme.colorScheme.outline),
+    )
+}
+
 @Composable
 private fun ProbabilityBar(label: String, value: Float, highlight: Boolean) {
     Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
                 label,
                 style = MaterialTheme.typography.bodyMedium,

@@ -28,6 +28,8 @@ code/
   cli/          JVM entry points — one runnable per pattern
   androidApp/   Compose app: draw-a-digit (CNN) + next-word (transformer) on-device
   webApp/       Compose/WebAssembly app: the transformer, trained live in the browser
+  ui-kit/       Compose UI kit vendored from the official SKaiNET examples (skainet-ui):
+                the rotating-logo loader + the loss-plot API, shared by androidApp & webApp
 ```
 
 ## Run the patterns (JVM)
@@ -149,11 +151,16 @@ Two **interactive, on-device** demos, styled to match the SKaiNET examples
 ./gradlew :webApp:wasmJsBrowserDistribution     # static bundle in build/dist/wasmJs
 ```
 
-The **same `:models:tiny-transformer` code** compiled to WebAssembly — the decoder-only
-transformer trains from scratch in the browser (no server, no download), then predicts the next
-word:
+The **same `:models:tiny-transformer` code** compiled to WebAssembly. A branded splash (the
+official SKaiNET rotating-logo loader) fronts a **Start training** button; on tap the decoder-only
+transformer trains from scratch in the browser (no server, no download) while a **live loss
+curve** animates, then it predicts the next word. The loader and plot are reused from the official
+[`skainet-ui`](https://github.com/SKaiNET-developers/SKaiNET-examples/tree/develop/skainet-ui)
+(vendored into `:ui-kit`).
 
-![web transformer](../docs/images/app-web-transformer.png)
+| Splash + Start (SKaiNET logo) | Trained: live loss curve + prediction |
+| --- | --- |
+| ![web splash](../docs/images/app-web-splash.png) | ![web transformer](../docs/images/app-web-transformer.png) |
 
 ## Notes
 

@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -28,6 +27,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,17 +43,33 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
 import sk.ainet.kotlinconf.android.ui.DigitCanvas
 import sk.ainet.kotlinconf.android.ui.rememberDrawState
 import sk.ainet.kotlinconf.android.ui.toMnistPixels
+import sk.ainet.ui.components.LoadingIndicator
+import sk.ainet.ui.components.SkaiNetSplash
+import sk.ainet.ui.plot.AxisConfig
+import sk.ainet.ui.plot.DataPoint
+import sk.ainet.ui.plot.DataSeries
+import sk.ainet.ui.plot.GridConfig
+import sk.ainet.ui.plot.LinePlot
+import sk.ainet.ui.plot.PlotBounds
 
 private enum class Screen { HOME, MNIST, TRANSFORMER }
 
 @Composable
 fun AppRoot() {
     var screen by remember { mutableStateOf(Screen.HOME) }
+    var splash by remember { mutableStateOf(true) }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        when (screen) {
+        if (splash) {
+            LaunchedEffect(Unit) { delay(1600); splash = false }
+            SkaiNetSplash(
+                title = "SKaiNET",
+                subtitle = "device-first machine learning · KotlinConf 2026",
+            )
+        } else when (screen) {
             Screen.HOME -> HomeScreen(onOpen = { screen = it })
             Screen.MNIST -> MnistScreen(onBack = { screen = Screen.HOME })
             Screen.TRANSFORMER -> TransformerScreen(onBack = { screen = Screen.HOME })
@@ -268,65 +284,93 @@ private fun TransformerScreen(onBack: () -> Unit, vm: TransformerViewModel = vie
     val state by vm.state.collectAsStateWithLifecycle()
 
     ScreenScaffold("Next word", onBack) {
-        if (state.training) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(22.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 2.dp,
-                )
-                Spacer(Modifier.width(12.dp))
+        when (state.phase) {
+            TrainingPhase.Idle -> {
                 Text(
-                    "Training on-device…  epoch ${state.epoch}/${state.totalEpochs}  ·  loss ${"%.3f".format(state.loss)}",
+                    "Train a decoder-only transformer from scratch on a tiny German corpus — live, " +
+                        "on this device, in a couple of seconds.",
                     style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                Spacer(Modifier.height(20.dp))
+                Button(onClick = vm::startTraining, modifier = Modifier.fillMaxWidth()) {
+                    Text("Start training")
+                }
             }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "A decoder-only transformer is learning a tiny German corpus from scratch, right now, on this device.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            return@ScreenScaffold
-        }
 
-        Text(
-            "Trained (final loss ${"%.3f".format(state.loss)}). Type a prompt; the model predicts the next word.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(16.dp))
-        OutlinedTextField(
-            value = state.prompt,
-            onValueChange = vm::onPromptChange,
-            label = { Text("Prompt") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(12.dp))
-        Button(onClick = { vm.predict() }, modifier = Modifier.fillMaxWidth()) {
-            Text("Predict next word")
-        }
-        Spacer(Modifier.height(20.dp))
-        if (state.predictions.isNotEmpty()) {
-            Card(
-                Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            ) {
-                Column(Modifier.padding(18.dp)) {
+            TrainingPhase.Training -> {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    LoadingIndicator(size = 26.dp)
+                    Spacer(Modifier.width(12.dp))
                     Text(
-                        "\"${state.prompt}\" →",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        "Training…  epoch ${state.epoch}/${state.totalEpochs}  ·  loss ${"%.3f".format(state.loss)}",
+                        style = MaterialTheme.typography.bodyMedium,
                     )
-                    Spacer(Modifier.height(10.dp))
-                    val top = state.predictions.firstOrNull()?.first
-                    for ((word, p) in state.predictions) {
-                        ProbabilityBar(word, p, highlight = word == top)
+                }
+                Spacer(Modifier.height(16.dp))
+                LossPlot(state.lossHistory, state.totalEpochs)
+            }
+
+            TrainingPhase.Done -> {
+                Text(
+                    "Trained (final loss ${"%.3f".format(state.loss)}). Type a prompt; the model predicts the next word.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(16.dp))
+                LossPlot(state.lossHistory, state.totalEpochs)
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = state.prompt,
+                    onValueChange = vm::onPromptChange,
+                    label = { Text("Prompt") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(12.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = { vm.predict() }, modifier = Modifier.weight(1f)) {
+                        Text("Predict next word")
+                    }
+                    OutlinedButton(onClick = vm::startTraining) { Text("Train again") }
+                }
+                Spacer(Modifier.height(20.dp))
+                if (state.predictions.isNotEmpty()) {
+                    Card(
+                        Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    ) {
+                        Column(Modifier.padding(18.dp)) {
+                            Text(
+                                "Next word after \"${state.prompt}\"",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            val top = state.predictions.firstOrNull()?.first
+                            for ((word, p) in state.predictions) {
+                                ProbabilityBar(word, p, highlight = word == top)
+                            }
+                        }
                     }
                 }
             }
         }
     }
+}
+
+/** Live training-loss curve, drawn with the vendored SKaiNET plot API. */
+@Composable
+private fun LossPlot(lossHistory: List<Float>, totalEpochs: Int) {
+    val points = lossHistory.mapIndexed { i, l -> DataPoint((i + 1).toFloat(), l) }
+    val yMax = (lossHistory.maxOrNull() ?: 3f).coerceAtLeast(0.1f)
+    LinePlot(
+        series = listOf(DataSeries(points, color = MaterialTheme.colorScheme.primary, strokeWidth = 2f)),
+        modifier = Modifier.fillMaxWidth().height(180.dp),
+        bounds = PlotBounds(0f, totalEpochs.toFloat(), 0f, yMax),
+        xAxis = AxisConfig(color = MaterialTheme.colorScheme.onSurfaceVariant, labelFormatter = { it.toInt().toString() }),
+        yAxis = AxisConfig(color = MaterialTheme.colorScheme.onSurfaceVariant, labelFormatter = { "%.1f".format(it) }),
+        grid = GridConfig(color = MaterialTheme.colorScheme.outline),
+    )
 }

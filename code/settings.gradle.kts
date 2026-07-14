@@ -35,6 +35,7 @@ include(":shared")
 include(":cli")
 include(":androidApp")
 include(":webApp")
+include(":ui-kit")
 
 // Standalone, publishable model modules (group sk.ainet.kotlinconf.models).
 include(":models:model-common")

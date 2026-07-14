@@ -34,7 +34,8 @@ structured-concurrency) loading API and a Java-compatible facade. The CNN bundle
 
 The Android app turns the CNN and transformer into two **interactive, on-device** demos — draw a
 digit and watch the CNN recognise it, or train the transformer live and ask it for the next word.
-The web app runs the **same transformer** in the browser, trained from scratch on WebAssembly:
+The web app runs the **same transformer** in the browser: a SKaiNET rotating-logo splash, a
+**Start training** button, and a live loss curve while it trains from scratch on WebAssembly:
 
 | Draw a digit (CNN, Android) | Next word (Transformer, Android) | Transformer in the browser (Wasm) |
 | --- | --- | --- |
