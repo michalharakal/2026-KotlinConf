@@ -1,0 +1,17 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Kotlin
+.kotlin/
+
+# IDE
+.idea/
+*.iml
+
+# Machine-specific Android SDK location
+local.properties
+
+# macOS
+.DS_Store

@@ -1,0 +1,54 @@
+[versions]
+# Pinned for the KotlinConf 2026 "Redefining ML with Kotlin" learning resource.
+# Kotlin 2.4.0 is required so the browser (wasmJs/js) targets can consume SKaiNET 0.36.0's
+# klibs, which are compiled with Kotlin 2.4.0. Compose Multiplatform 1.11.x pairs with it.
+kotlin = "2.4.0"
+skainet = "0.36.0"
+kotlinx-coroutines = "1.10.2"
+kotlinx-io = "0.8.2"
+
+# Android / Compose (used by :androidApp and the shared androidTarget)
+agp = "8.12.3"
+android-compileSdk = "36"
+android-minSdk = "24"
+android-targetSdk = "36"
+androidx-activityCompose = "1.12.2"
+androidx-lifecycle = "2.9.6"
+androidx-core-splashscreen = "1.0.1"
+composeMultiplatform = "1.11.1"
+
+[libraries]
+kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
+
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "androidx-core-splashscreen" }
+androidx-lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+
+# --- SKaiNET (BOM is group `sk.ainet`; libraries are group `sk.ainet.core`) ---
+skainet-bom = { module = "sk.ainet:skainet-bom", version.ref = "skainet" }
+skainet-lang-core = { module = "sk.ainet.core:skainet-lang-core" }
+skainet-lang-models = { module = "sk.ainet.core:skainet-lang-models" }
+skainet-lang-dag = { module = "sk.ainet.core:skainet-lang-dag" }
+skainet-backend-cpu = { module = "sk.ainet.core:skainet-backend-cpu" }
+skainet-data-api = { module = "sk.ainet.core:skainet-data-api" }
+skainet-data-simple = { module = "sk.ainet.core:skainet-data-simple" }
+skainet-data-transform = { module = "sk.ainet.core:skainet-data-transform" }
+skainet-io-core = { module = "sk.ainet.core:skainet-io-core" }
+skainet-io-gguf = { module = "sk.ainet.core:skainet-io-gguf" }
+skainet-io-safetensors = { module = "sk.ainet.core:skainet-io-safetensors" }
+skainet-io-image = { module = "sk.ainet.core:skainet-io-image" }
+skainet-compile-core = { module = "sk.ainet.core:skainet-compile-core" }
+skainet-compile-dag = { module = "sk.ainet.core:skainet-compile-dag" }
+skainet-compile-hlo = { module = "sk.ainet.core:skainet-compile-hlo" }
+
+[plugins]
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Post-splash app theme: dark window background so there is no white flash before
+         Compose draws (the "generic Android screen" this replaces). -->
+    <style name="Theme.SKaiNET" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/skai_background</item>
+        <item name="android:statusBarColor">@color/skai_background</item>
+        <item name="android:navigationBarColor">@color/skai_background</item>
+    </style>
+
+    <!-- Launch splash (Android 12 SplashScreen API, backported via core-splashscreen):
+         the SKaiNET logo on its natural light background (so the dark nodes stay visible and
+         the ring isn't clipped by the circular icon mask), then hands off to Theme.SKaiNET. -->
+    <style name="Theme.SKaiNET.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/skai_logo_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/skainet_splash_icon</item>
+        <item name="postSplashScreenTheme">@style/Theme.SKaiNET</item>
+    </style>
+
+</resources>

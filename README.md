@@ -15,12 +15,52 @@ Large Language Models have revolutionized AI — but their centralized nature co
 
 [`slides/`](slides/) — talk slides ([PDF](slides/2026-KotlinKonf-MHarakal-SKaiNET.pdf))
 
-### Source code 
+### Source code
 
-> [!NOTE]  
->**I am finnishing on providing sources** from the talk.
+[`code/`](code) — a runnable Kotlin Multiplatform (JVM + Android + WebAssembly) project that
+follows the talk as **five patterns**, each using the real
+[SKaiNET](https://github.com/SKaiNET-developers/SKaiNET) DSL (pinned to **0.36.0** / Kotlin
+2.4.0):
 
-Until then have a look on [current SkaiNET examples](https://examples.skainet.sk/) and source code of the [SkaiNET project](https://github.com/SKaiNET-developers/SKaiNET) 
+1. **Tensors** — scalar → vector → matrix → tensor → batch, and NumPy-style slicing
+2. **Linear** — `dense` layers and `forward(x, ctx)` (forward propagation)
+3. **MLP** — a network approximating `y = sin(x)` (pretrained weights)
+4. **CNN** — a LeNet-style MNIST classifier with pretrained weights, the device-first model
+5. **Transformer** — a decoder-only transformer **trained live** in a couple of seconds
+
+Each model is a **standalone, publishable Gradle module** with an async (Flow +
+structured-concurrency) loading API and a Java-compatible facade. The CNN bundles its one
+`mnist_cnn.gguf` weight file, served across every platform from a single copy via kotlinx-io.
+
+The Android app turns the CNN and transformer into two **interactive, on-device** demos — draw a
+digit and watch the CNN recognise it, or train the transformer live and ask it for the next word.
+The web app runs the **same transformer** in the browser: a SKaiNET rotating-logo splash, a
+**Start training** button, and a live loss curve while it trains from scratch on WebAssembly:
+
+| Draw a digit (CNN, Android) | Next word (Transformer, Android) | Transformer in the browser (Wasm) |
+| --- | --- | --- |
+| ![draw a digit](docs/images/app-mnist.png) | ![next word](docs/images/app-transformer.png) | ![web](docs/images/app-web-transformer.png) |
+
+Start with the [**slide → code map**](docs/slide-to-code.md), which lines each pattern up with the
+deck. Then:
+
+```bash
+cd code
+./gradlew :cli:runCnn                       # classify real MNIST digits with the pretrained CNN
+./gradlew :cli:runTransformer               # train a tiny transformer, then predict the next word
+./gradlew check                             # run the tests for every pattern
+./gradlew :androidApp:assembleDebug         # build the interactive on-device Android app
+./gradlew :webApp:wasmJsBrowserDevelopmentRun   # run the transformer live in the browser
+```
+
+The same `sk.ainet.kotlinconf.*` model code runs on the JVM, Android, and the browser — the
+talk's device-first, one-codebase thesis. See [`code/README.md`](code/README.md) for details.
+
+> Pinned to SKaiNET **0.36.0** / Kotlin 2.4.0; for newer versions see the official
+> [SKaiNET examples repository](https://github.com/SKaiNET-developers/SKaiNET-examples).
+
+You can also explore the [live in-browser SKaiNET demos](https://examples.skainet.sk/) and the
+[SKaiNET project](https://github.com/SKaiNET-developers/SKaiNET) itself.
 
 ## License
 
