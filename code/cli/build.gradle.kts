@@ -12,21 +12,21 @@ dependencies {
 }
 
 application {
-    // Overridden per stage via `-PmainClass=...` or the run* tasks below.
-    mainClass.set("sk.ainet.kotlinconf.cli.MainKt")
+    // Overridden per pattern via the run* tasks below.
+    mainClass.set("sk.ainet.kotlinconf.cli.CnnKt")
 }
 
-// One convenience run task per talk stage.
+// One convenience run task per pattern the talk walks through.
 listOf(
-    "1" to "sk.ainet.kotlinconf.cli.Stage1Kt",
-    "2" to "sk.ainet.kotlinconf.cli.Stage2Kt",
-    "3" to "sk.ainet.kotlinconf.cli.Stage3Kt",
-    "4" to "sk.ainet.kotlinconf.cli.Stage4Kt",
-    "5" to "sk.ainet.kotlinconf.cli.Stage5Kt",
-).forEach { (n, cls) ->
-    tasks.register<JavaExec>("runStage$n") {
+    "Tensors" to "sk.ainet.kotlinconf.cli.TensorsKt",
+    "Linear" to "sk.ainet.kotlinconf.cli.LinearKt",
+    "Mlp" to "sk.ainet.kotlinconf.cli.MlpKt",
+    "Cnn" to "sk.ainet.kotlinconf.cli.CnnKt",
+    "Transformer" to "sk.ainet.kotlinconf.cli.TransformerKt",
+).forEach { (name, cls) ->
+    tasks.register<JavaExec>("run$name") {
         group = "kotlinconf"
-        description = "Run talk Stage $n"
+        description = "Run the $name demo"
         classpath = sourceSets["main"].runtimeClasspath
         mainClass.set(cls)
     }

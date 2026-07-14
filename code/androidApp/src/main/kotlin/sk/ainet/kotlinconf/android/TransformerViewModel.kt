@@ -8,11 +8,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import sk.ainet.kotlinconf.s5_transformer.DEFAULT_CONTEXT_LEN
-import sk.ainet.kotlinconf.s5_transformer.DEFAULT_CORPUS
-import sk.ainet.kotlinconf.s5_transformer.DEFAULT_MAX_VOCAB
-import sk.ainet.kotlinconf.s5_transformer.TinyTransformerTrainer
-import sk.ainet.kotlinconf.s5_transformer.WordTokenizer
+import sk.ainet.kotlinconf.models.transformer.TinyTransformerTrainer
+import sk.ainet.kotlinconf.models.transformer.buildTinyTransformerTrainer
 
 data class TransformerUiState(
     val training: Boolean = true,
@@ -38,9 +35,7 @@ class TransformerViewModel : ViewModel() {
     init {
         viewModelScope.launch {
             withContext(Dispatchers.Default) {
-                val vocab = WordTokenizer.buildVocab(DEFAULT_CORPUS, DEFAULT_MAX_VOCAB)
-                val windows = WordTokenizer.windows(DEFAULT_CORPUS, vocab, DEFAULT_CONTEXT_LEN)
-                trainer = TinyTransformerTrainer(vocab, windows, DEFAULT_CONTEXT_LEN)
+                trainer = buildTinyTransformerTrainer()
                 var epoch = 0
                 trainer.train(epochs = _state.value.totalEpochs, learningRate = 0.05f).collect { p ->
                     epoch++

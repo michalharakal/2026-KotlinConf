@@ -1,6 +1,8 @@
 [versions]
 # Pinned for the KotlinConf 2026 "Redefining ML with Kotlin" learning resource.
-kotlin = "2.3.21"
+# Kotlin 2.4.0 is required so the browser (wasmJs/js) targets can consume SKaiNET 0.36.0's
+# klibs, which are compiled with Kotlin 2.4.0. Compose Multiplatform 1.11.x pairs with it.
+kotlin = "2.4.0"
 skainet = "0.36.0"
 kotlinx-coroutines = "1.10.2"
 kotlinx-io = "0.8.2"
@@ -12,7 +14,7 @@ android-minSdk = "24"
 android-targetSdk = "36"
 androidx-activityCompose = "1.12.2"
 androidx-lifecycle = "2.9.6"
-composeMultiplatform = "1.10.1"
+composeMultiplatform = "1.11.1"
 
 [libraries]
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }

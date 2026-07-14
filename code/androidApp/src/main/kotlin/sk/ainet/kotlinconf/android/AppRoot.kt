@@ -76,14 +76,14 @@ private fun HomeScreen(onOpen: (Screen) -> Unit) {
         Spacer(Modifier.height(20.dp))
         DemoCard(
             title = "Draw a digit",
-            subtitle = "Stage 4 · CNN",
+            subtitle = "CNN",
             body = "Scribble a number; a LeNet CNN with pretrained weights recognises it on-device.",
             onClick = { onOpen(Screen.MNIST) },
         )
         Spacer(Modifier.height(14.dp))
         DemoCard(
             title = "Next word",
-            subtitle = "Stage 5 · Transformer",
+            subtitle = "Transformer",
             body = "A decoder-only transformer trained live in seconds, then predicts the next word.",
             onClick = { onOpen(Screen.TRANSFORMER) },
         )

@@ -11,20 +11,20 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            // `api` so downstream modules (:cli, :androidApp) get the SKaiNET DSL types.
+            // Umbrella: re-export the standalone model modules so :cli and :androidApp get the
+            // CNN / MLP / transformer (and their async loaders) transitively via :shared.
+            api(project(":models:model-common"))
+            api(project(":models:mnist-cnn"))
+            api(project(":models:sinus-mlp"))
+            api(project(":models:tiny-transformer"))
+
+            // The foundational `tensors` + `linear` demos live here and need only the DSL.
+            // `api` so downstream modules get the SKaiNET DSL types.
             api(project.dependencies.platform(libs.skainet.bom))
             api(libs.skainet.lang.core)
             api(libs.skainet.backend.cpu)
-            api(libs.skainet.lang.models)
-            // Graph execution + gradient tape (Stage 5 training) live here.
-            api(libs.skainet.compile.core)
-            api(libs.skainet.compile.dag)
-            // GGUF reader — Stage 4 loads the pretrained mnist_cnn.gguf weights.
-            api(libs.skainet.io.core)
-            api(libs.skainet.io.gguf)
 
             api(libs.kotlinx.coroutines)
-            implementation(libs.kotlinx.io.core)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
